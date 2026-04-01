@@ -8,6 +8,7 @@ data class LinkPostrUiState(
     val selectedAppTheme: AppThemeOption = AppThemeOption.MidnightBlue,
     val generatedPost: String = "",
     val hashtags: List<String> = emptyList(),
+    val emojiSuggestions: List<String> = emptyList(),
     val ideaSuggestions: List<String> = PostIdeaRepository.starterIdeas,
     val isLoading: Boolean = false,
     val loadingLabel: String = "",

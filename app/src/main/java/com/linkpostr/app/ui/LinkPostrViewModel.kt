@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linkpostr.app.data.LinkPostrRepository
 import com.linkpostr.app.data.ThemePreferences
+import com.linkpostr.app.domain.EmojiSuggestionEngine
 import com.linkpostr.app.domain.HashtagGenerator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,6 +66,7 @@ class LinkPostrViewModel(
                             loadingLabel = "",
                             generatedPost = post,
                             hashtags = emptyList(),
+                            emojiSuggestions = emptyList(),
                             message = "Fresh draft ready.",
                             isError = false,
                         )
@@ -100,6 +102,7 @@ class LinkPostrViewModel(
                             isLoading = false,
                             loadingLabel = "",
                             generatedPost = rewritten,
+                            emojiSuggestions = emptyList(),
                             message = "Tone polished for LinkedIn.",
                             isError = false,
                         )
@@ -123,6 +126,39 @@ class LinkPostrViewModel(
             it.copy(
                 hashtags = hashtags,
                 message = "Hashtags refreshed.",
+                isError = false,
+            )
+        }
+    }
+
+    fun suggestEmojis() {
+        val source = uiState.value.generatedPost.ifBlank { uiState.value.topic }.trim()
+        if (source.isBlank()) {
+            showMessage("Add a topic or generate a post first, then I can suggest emojis.", isError = true)
+            return
+        }
+
+        val suggestions = EmojiSuggestionEngine.suggest(source, uiState.value.selectedTone)
+        _uiState.update {
+            it.copy(
+                emojiSuggestions = suggestions,
+                message = "Emoji suggestions are ready.",
+                isError = false,
+            )
+        }
+    }
+
+    fun addEmojiToPost(emoji: String) {
+        val post = uiState.value.generatedPost.trim()
+        if (post.isBlank()) {
+            showMessage("Generate a post first, then add emojis.", isError = true)
+            return
+        }
+
+        _uiState.update {
+            it.copy(
+                generatedPost = EmojiSuggestionEngine.append(post, emoji),
+                message = "$emoji added to your draft.",
                 isError = false,
             )
         }

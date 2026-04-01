@@ -6,8 +6,6 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +22,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
@@ -32,7 +30,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.EmojiEmotions
 import androidx.compose.material.icons.rounded.Hub
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Tag
 import androidx.compose.material3.AssistChip
@@ -41,6 +41,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -56,7 +58,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -298,6 +302,13 @@ fun LinkPostrScreen(
                                     Text("Generate Hashtags")
                                 }
                                 OutlinedButton(
+                                    onClick = viewModel::suggestEmojis,
+                                ) {
+                                    Icon(Icons.Rounded.EmojiEmotions, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Emoji Touch")
+                                }
+                                OutlinedButton(
                                     onClick = {
                                         clipboardManager.setText(AnnotatedString(finalShareText))
                                         Toast.makeText(context, "Post copied to clipboard.", Toast.LENGTH_SHORT).show()
@@ -320,6 +331,41 @@ fun LinkPostrScreen(
                                     Icon(Icons.Rounded.Share, contentDescription = null)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text("Share Anywhere")
+                                }
+                            }
+                        }
+                    }
+
+                    if (state.emojiSuggestions.isNotEmpty()) {
+                        item {
+                            GlassCard {
+                                Text(
+                                    text = "Emoji Suggestions",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    state.emojiSuggestions.forEach { emoji ->
+                                        AssistChip(
+                                            onClick = { viewModel.addEmojiToPost(emoji) },
+                                            label = { Text("$emoji Add") },
+                                            colors = AssistChipDefaults.assistChipColors(
+                                                containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.14f),
+                                                labelColor = MaterialTheme.colorScheme.onSurface,
+                                                leadingIconContentColor = MaterialTheme.colorScheme.secondary,
+                                            ),
+                                            leadingIcon = {
+                                                Text(
+                                                    text = emoji,
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                )
+                                            },
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -385,6 +431,8 @@ private fun ThemeSelectorCard(
     selectedTheme: AppThemeOption,
     onThemeSelected: (AppThemeOption) -> Unit,
 ) {
+    var expanded by remember { mutableStateOf(false) }
+
     GlassCard {
         Text(
             text = "Choose your theme",
@@ -398,67 +446,68 @@ private fun ThemeSelectorCard(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(14.dp))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            AppThemeOption.entries.forEach { theme ->
-                ThemeOptionTile(
-                    theme = theme,
-                    selected = theme == selectedTheme,
-                    onClick = { onThemeSelected(theme) },
+        Box {
+            OutlinedButton(
+                onClick = { expanded = true },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(
+                        text = selectedTheme.label,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = selectedTheme.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Rounded.KeyboardArrowDown,
+                    contentDescription = "Choose theme",
                 )
             }
-        }
-    }
-}
 
-@Composable
-private fun ThemeOptionTile(
-    theme: AppThemeOption,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    val borderColor = if (selected) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
-    }
-    val containerColor = if (selected) {
-        MaterialTheme.colorScheme.primary.copy(alpha = if (theme.isDark) 0.16f else 0.1f)
-    } else {
-        MaterialTheme.colorScheme.surface.copy(alpha = 0.86f)
-    }
-
-    Surface(
-        modifier = Modifier
-            .width(162.dp)
-            .border(1.dp, borderColor, RoundedCornerShape(20.dp))
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        color = containerColor,
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            val previewColors = themePreviewColors(theme)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                previewColors.forEach { previewColor ->
-                    ThemePreviewDot(previewColor)
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier
+                    .fillMaxWidth(0.92f)
+                    .background(MaterialTheme.colorScheme.surface),
+            ) {
+                AppThemeOption.entries.forEach { theme ->
+                    DropdownMenuItem(
+                        text = {
+                            Column {
+                                Text(
+                                    text = theme.label,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = if (theme == selectedTheme) FontWeight.SemiBold else FontWeight.Medium,
+                                )
+                                Text(
+                                    text = theme.description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        },
+                        leadingIcon = {
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                themePreviewColors(theme).forEach { previewColor ->
+                                    ThemePreviewDot(previewColor)
+                                }
+                            }
+                        },
+                        onClick = {
+                            expanded = false
+                            onThemeSelected(theme)
+                        },
+                    )
                 }
             }
-            Text(
-                text = theme.label,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                text = theme.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }
@@ -493,6 +542,7 @@ private fun LinkedInPreviewCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         shape = RoundedCornerShape(28.dp),
@@ -572,6 +622,7 @@ private fun GlassCard(
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
