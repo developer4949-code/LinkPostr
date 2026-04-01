@@ -2,7 +2,8 @@ package com.linkpostr.app.ui
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -688,18 +689,49 @@ private fun shareText(
     val shareIntent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
         putExtra(Intent.EXTRA_TEXT, text)
-        if (linkedinOnly) {
-            `package` = "com.linkedin.android"
-        }
     }
 
-    val safeIntent = if (linkedinOnly && shareIntent.resolveActivity(context.packageManager) == null) {
-        Intent(Intent.ACTION_VIEW, Uri.parse("https://www.linkedin.com/feed/"))
-    } else if (linkedinOnly) {
-        shareIntent
+    val safeIntent = if (linkedinOnly) {
+        buildLinkedInComposerIntent(context, shareIntent)
+            ?: run {
+                Toast.makeText(
+                    context,
+                    "LinkedIn composer was not found. Opening the share sheet instead.",
+                    Toast.LENGTH_SHORT,
+                ).show()
+                Intent.createChooser(shareIntent, "Share your draft")
+            }
     } else {
         Intent.createChooser(shareIntent, "Share your draft")
     }
 
     context.startActivity(safeIntent)
+}
+
+private fun buildLinkedInComposerIntent(
+    context: Context,
+    shareIntent: Intent,
+): Intent? {
+    val packageManager = context.packageManager
+    val linkedInActivity = queryShareActivities(packageManager, shareIntent)
+        .firstOrNull { it.activityInfo.packageName == "com.linkedin.android" }
+        ?: return null
+
+    return Intent(shareIntent).apply {
+        setClassName(linkedInActivity.activityInfo.packageName, linkedInActivity.activityInfo.name)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+}
+
+private fun queryShareActivities(
+    packageManager: PackageManager,
+    shareIntent: Intent,
+) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    packageManager.queryIntentActivities(
+        shareIntent,
+        PackageManager.ResolveInfoFlags.of(0),
+    )
+} else {
+    @Suppress("DEPRECATION")
+    packageManager.queryIntentActivities(shareIntent, 0)
 }
