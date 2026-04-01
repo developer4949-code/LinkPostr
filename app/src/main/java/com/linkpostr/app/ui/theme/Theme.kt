@@ -82,8 +82,12 @@ fun LinkPostrTheme(
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = android.graphics.Color.TRANSPARENT
-            window.navigationBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !themeOption.isDark
+            window.navigationBarColor = android.graphics.Color.TRANSPARENT
+            window.isNavigationBarContrastEnforced = false
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !themeOption.isDark
+                isAppearanceLightNavigationBars = !themeOption.isDark
+            }
         }
     }
 
