@@ -3,6 +3,7 @@ package com.linkpostr.app.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linkpostr.app.data.LinkPostrRepository
+import com.linkpostr.app.data.ThemePreferences
 import com.linkpostr.app.domain.HashtagGenerator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,9 +13,14 @@ import kotlinx.coroutines.launch
 
 class LinkPostrViewModel(
     private val repository: LinkPostrRepository,
+    private val themePreferences: ThemePreferences,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(LinkPostrUiState())
+    private val _uiState = MutableStateFlow(
+        LinkPostrUiState(
+            selectedAppTheme = themePreferences.getSelectedTheme(),
+        ),
+    )
     val uiState: StateFlow<LinkPostrUiState> = _uiState.asStateFlow()
 
     fun onTopicChange(value: String) {
@@ -23,6 +29,11 @@ class LinkPostrViewModel(
 
     fun onToneSelected(tone: ToneOption) {
         _uiState.update { it.copy(selectedTone = tone) }
+    }
+
+    fun onThemeSelected(theme: AppThemeOption) {
+        themePreferences.saveSelectedTheme(theme)
+        _uiState.update { it.copy(selectedAppTheme = theme) }
     }
 
     fun onIdeaSelected(idea: String) {
@@ -132,4 +143,3 @@ class LinkPostrViewModel(
         }
     }
 }
-

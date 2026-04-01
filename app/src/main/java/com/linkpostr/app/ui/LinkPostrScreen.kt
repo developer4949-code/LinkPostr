@@ -6,6 +6,8 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -66,14 +69,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.linkpostr.app.ui.theme.BackgroundMid
-import com.linkpostr.app.ui.theme.BackgroundEnd
-import com.linkpostr.app.ui.theme.BackgroundStart
-import com.linkpostr.app.ui.theme.CardHighlight
-import com.linkpostr.app.ui.theme.Primary
-import com.linkpostr.app.ui.theme.PrimaryStrong
-import com.linkpostr.app.ui.theme.SurfaceRaised
-import com.linkpostr.app.ui.theme.SuccessTint
+import com.linkpostr.app.ui.theme.ThemeSuccess
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -104,10 +100,23 @@ fun LinkPostrScreen(
                 .fillMaxSize()
                 .background(
                     brush = Brush.verticalGradient(
-                        colors = listOf(BackgroundStart, BackgroundMid, BackgroundEnd),
+                        colors = listOf(
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.surface,
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
+                        ),
                     ),
                 ),
         ) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 88.dp, y = (-18).dp)
+                    .size(220.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+            )
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -119,6 +128,13 @@ fun LinkPostrScreen(
             ) {
                 item {
                     HeaderBlock()
+                }
+
+                item {
+                    ThemeSelectorCard(
+                        selectedTheme = state.selectedAppTheme,
+                        onThemeSelected = viewModel::onThemeSelected,
+                    )
                 }
 
                 item {
@@ -150,9 +166,9 @@ fun LinkPostrScreen(
                                         )
                                     },
                                     colors = AssistChipDefaults.assistChipColors(
-                                        containerColor = CardHighlight,
+                                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                                         labelColor = MaterialTheme.colorScheme.onSurface,
-                                        leadingIconContentColor = Primary,
+                                        leadingIconContentColor = MaterialTheme.colorScheme.primary,
                                     ),
                                 )
                             }
@@ -195,7 +211,7 @@ fun LinkPostrScreen(
                                     onClick = { viewModel.onToneSelected(tone) },
                                     label = { Text(tone.label) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = PrimaryStrong.copy(alpha = 0.2f),
+                                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                                         selectedLabelColor = MaterialTheme.colorScheme.onSurface,
                                     ),
                                 )
@@ -227,7 +243,7 @@ fun LinkPostrScreen(
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(24.dp),
                                     strokeWidth = 2.5.dp,
-                                    color = Primary,
+                                    color = MaterialTheme.colorScheme.primary,
                                 )
                                 Column {
                                     Text(
@@ -325,7 +341,7 @@ fun LinkPostrScreen(
                                     state.hashtags.forEach { tag ->
                                         Surface(
                                             shape = RoundedCornerShape(999.dp),
-                                            color = SuccessTint.copy(alpha = 0.16f),
+                                            color = ThemeSuccess.copy(alpha = 0.16f),
                                         ) {
                                             Text(
                                                 text = tag,
@@ -356,11 +372,116 @@ private fun HeaderBlock() {
             color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
-            text = "A faster, darker, cleaner LinkedIn writing studio powered by AI and instant local helpers.",
+            text = "Switch between four looks, stay in light or dark mode, and keep writing in a cleaner, faster workspace.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ThemeSelectorCard(
+    selectedTheme: AppThemeOption,
+    onThemeSelected: (AppThemeOption) -> Unit,
+) {
+    GlassCard {
+        Text(
+            text = "Choose your theme",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = "Pick from four styles. Your selection is saved automatically for the next launch.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(14.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            AppThemeOption.entries.forEach { theme ->
+                ThemeOptionTile(
+                    theme = theme,
+                    selected = theme == selectedTheme,
+                    onClick = { onThemeSelected(theme) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThemeOptionTile(
+    theme: AppThemeOption,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val borderColor = if (selected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
+    }
+    val containerColor = if (selected) {
+        MaterialTheme.colorScheme.primary.copy(alpha = if (theme.isDark) 0.16f else 0.1f)
+    } else {
+        MaterialTheme.colorScheme.surface.copy(alpha = 0.86f)
+    }
+
+    Surface(
+        modifier = Modifier
+            .width(162.dp)
+            .border(1.dp, borderColor, RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        color = containerColor,
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            val previewColors = themePreviewColors(theme)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                previewColors.forEach { previewColor ->
+                    ThemePreviewDot(previewColor)
+                }
+            }
+            Text(
+                text = theme.label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = theme.description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+private fun themePreviewColors(theme: AppThemeOption): List<Color> {
+    return when (theme) {
+        AppThemeOption.MidnightBlue -> listOf(Color(0xFF5BA6FF), Color(0xFF89C2FF), Color(0xFF09111D))
+        AppThemeOption.ElectricNight -> listOf(Color(0xFF3ED2FF), Color(0xFF7A8DFF), Color(0xFF050A16))
+        AppThemeOption.OceanLight -> listOf(Color(0xFF1E67D8), Color(0xFF4BA3F2), Color(0xFFEAF4FF))
+        AppThemeOption.CloudLight -> listOf(Color(0xFF365ACF), Color(0xFF6C90F1), Color(0xFFF5F8FD))
+    }
+}
+
+@Composable
+private fun ThemePreviewDot(
+    color: Color,
+) {
+    Box(
+        modifier = Modifier
+            .size(12.dp)
+            .clip(CircleShape)
+            .background(color),
+    )
 }
 
 @Composable
@@ -371,7 +492,7 @@ private fun LinkedInPreviewCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = SurfaceRaised,
+            containerColor = MaterialTheme.colorScheme.surface,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         shape = RoundedCornerShape(28.dp),
@@ -390,7 +511,10 @@ private fun LinkedInPreviewCard(
                         .clip(CircleShape)
                         .background(
                             brush = Brush.linearGradient(
-                                colors = listOf(PrimaryStrong, Primary),
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.secondary,
+                                    MaterialTheme.colorScheme.primary,
+                                ),
                             ),
                         ),
                     contentAlignment = Alignment.Center,
@@ -447,7 +571,7 @@ private fun GlassCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
-            containerColor = SurfaceRaised.copy(alpha = 0.96f),
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {

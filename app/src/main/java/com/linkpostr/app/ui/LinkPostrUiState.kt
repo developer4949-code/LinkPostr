@@ -5,6 +5,7 @@ import com.linkpostr.app.domain.PostIdeaRepository
 data class LinkPostrUiState(
     val topic: String = "",
     val selectedTone: ToneOption = ToneOption.Professional,
+    val selectedAppTheme: AppThemeOption = AppThemeOption.MidnightBlue,
     val generatedPost: String = "",
     val hashtags: List<String> = emptyList(),
     val ideaSuggestions: List<String> = PostIdeaRepository.starterIdeas,
@@ -24,3 +25,13 @@ enum class ToneOption(
     Thoughtful("Thoughtful", "reflective and thoughtful"),
 }
 
+enum class AppThemeOption(
+    val label: String,
+    val description: String,
+    val isDark: Boolean,
+) {
+    MidnightBlue("Midnight Blue", "Dark and slick navy", true),
+    ElectricNight("Electric Night", "Bold dark blue glow", true),
+    OceanLight("Ocean Light", "Fresh light blue canvas", false),
+    CloudLight("Cloud Light", "Soft clean light theme", false),
+}
