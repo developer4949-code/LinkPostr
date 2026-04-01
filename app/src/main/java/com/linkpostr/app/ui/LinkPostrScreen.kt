@@ -22,10 +22,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.ContentCopy
@@ -67,9 +66,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.linkpostr.app.ui.theme.BackgroundMid
 import com.linkpostr.app.ui.theme.BackgroundEnd
 import com.linkpostr.app.ui.theme.BackgroundStart
 import com.linkpostr.app.ui.theme.CardHighlight
+import com.linkpostr.app.ui.theme.Primary
+import com.linkpostr.app.ui.theme.PrimaryStrong
+import com.linkpostr.app.ui.theme.SurfaceRaised
 import com.linkpostr.app.ui.theme.SuccessTint
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -101,143 +104,157 @@ fun LinkPostrScreen(
                 .fillMaxSize()
                 .background(
                     brush = Brush.verticalGradient(
-                        colors = listOf(BackgroundStart, BackgroundEnd),
+                        colors = listOf(BackgroundStart, BackgroundMid, BackgroundEnd),
                     ),
                 ),
         ) {
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .statusBarsPadding()
                     .navigationBarsPadding()
                     .padding(paddingValues)
-                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp),
             ) {
-                HeaderBlock()
-
-                GlassCard {
-                    Text(
-                        text = "Post ideas",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        state.ideaSuggestions.forEach { suggestion ->
-                            AssistChip(
-                                onClick = { viewModel.onIdeaSelected(suggestion) },
-                                label = {
-                                    Text(
-                                        text = suggestion,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Rounded.AutoAwesome,
-                                        contentDescription = null,
-                                    )
-                                },
-                                colors = AssistChipDefaults.assistChipColors(
-                                    containerColor = CardHighlight,
-                                ),
-                            )
-                        }
-                    }
+                item {
+                    HeaderBlock()
                 }
 
-                GlassCard {
-                    Text(
-                        text = "Create your draft",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = state.topic,
-                        onValueChange = viewModel::onTopicChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 3,
-                        label = { Text("What should your LinkedIn post be about?") },
-                        placeholder = { Text("Example: My internship experience building an Android app") },
-                        shape = RoundedCornerShape(18.dp),
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Text(
-                        text = "Tone",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        ToneOption.entries.forEach { tone ->
-                            FilterChip(
-                                selected = tone == state.selectedTone,
-                                onClick = { viewModel.onToneSelected(tone) },
-                                label = { Text(tone.label) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
-                                ),
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = viewModel::generatePost,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !state.isLoading,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.AutoAwesome,
-                            contentDescription = null,
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Generate Post")
-                    }
-                }
-
-                AnimatedVisibility(visible = state.isLoading) {
+                item {
                     GlassCard {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        Text(
+                            text = "Post ideas",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.5.dp,
-                            )
-                            Column {
-                                Text(
-                                    text = state.loadingLabel.ifBlank { "Working on it..." },
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                                Text(
-                                    text = "Hugging Face is handling the writing-heavy part.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            state.ideaSuggestions.forEach { suggestion ->
+                                AssistChip(
+                                    onClick = { viewModel.onIdeaSelected(suggestion) },
+                                    label = {
+                                        Text(
+                                            text = suggestion,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Rounded.AutoAwesome,
+                                            contentDescription = null,
+                                        )
+                                    },
+                                    colors = AssistChipDefaults.assistChipColors(
+                                        containerColor = CardHighlight,
+                                        labelColor = MaterialTheme.colorScheme.onSurface,
+                                        leadingIconContentColor = Primary,
+                                    ),
                                 )
                             }
                         }
                     }
                 }
 
-                AnimatedVisibility(visible = state.generatedPost.isNotBlank()) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                item {
+                    GlassCard {
+                        Text(
+                            text = "Create your draft",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = state.topic,
+                            onValueChange = viewModel::onTopicChange,
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3,
+                            label = { Text("What should your LinkedIn post be about?") },
+                            placeholder = { Text("Example: My internship experience building an Android app") },
+                            shape = RoundedCornerShape(18.dp),
+                            textStyle = MaterialTheme.typography.bodyLarge,
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text(
+                            text = "Tone",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            ToneOption.entries.forEach { tone ->
+                                FilterChip(
+                                    selected = tone == state.selectedTone,
+                                    onClick = { viewModel.onToneSelected(tone) },
+                                    label = { Text(tone.label) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = PrimaryStrong.copy(alpha = 0.2f),
+                                        selectedLabelColor = MaterialTheme.colorScheme.onSurface,
+                                    ),
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = viewModel::generatePost,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !state.isLoading,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.AutoAwesome,
+                                contentDescription = null,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Generate Post")
+                        }
+                    }
+                }
+
+                item {
+                    AnimatedVisibility(visible = state.isLoading) {
+                        GlassCard {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.5.dp,
+                                    color = Primary,
+                                )
+                                Column {
+                                    Text(
+                                        text = state.loadingLabel.ifBlank { "Working on it..." },
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Text(
+                                        text = "Hugging Face is handling the writing-heavy part.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (state.generatedPost.isNotBlank()) {
+                    item {
                         LinkedInPreviewCard(
                             post = state.generatedPost,
                             hashtagCount = state.hashtags.size,
                         )
+                    }
 
+                    item {
                         GlassCard {
                             Text(
                                 text = "Actions",
@@ -290,8 +307,10 @@ fun LinkPostrScreen(
                                 }
                             }
                         }
+                    }
 
-                        if (state.hashtags.isNotEmpty()) {
+                    if (state.hashtags.isNotEmpty()) {
+                        item {
                             GlassCard {
                                 Text(
                                     text = "Hashtags",
@@ -334,9 +353,10 @@ private fun HeaderBlock() {
             text = "LinkPostr",
             style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
-            text = "Craft LinkedIn-ready posts with a free Hugging Face writing model, then polish, hashtag, copy, and share them in one flow.",
+            text = "A faster, darker, cleaner LinkedIn writing studio powered by AI and instant local helpers.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -351,7 +371,7 @@ private fun LinkedInPreviewCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = SurfaceRaised,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         shape = RoundedCornerShape(28.dp),
@@ -368,7 +388,11 @@ private fun LinkedInPreviewCard(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(PrimaryStrong, Primary),
+                            ),
+                        ),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -423,7 +447,7 @@ private fun GlassCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+            containerColor = SurfaceRaised.copy(alpha = 0.96f),
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {

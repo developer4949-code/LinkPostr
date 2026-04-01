@@ -1,7 +1,6 @@
 package com.linkpostr.app.ui.theme
 
 import android.app.Activity
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -16,21 +15,31 @@ private val LightScheme = lightColorScheme(
     primary = Primary,
     onPrimary = Color.White,
     secondary = Secondary,
-    background = SurfaceLight,
-    surface = Color.White,
+    onSecondary = Color(0xFF041120),
+    background = BackgroundMid,
+    onBackground = TextPrimary,
+    surface = SurfaceRaised,
+    onSurface = TextPrimary,
+    onSurfaceVariant = TextSecondary,
+    outline = CardBorder,
 )
 
 private val DarkScheme = darkColorScheme(
     primary = Primary,
     onPrimary = Color.White,
     secondary = Secondary,
+    onSecondary = Color(0xFF041120),
     background = SurfaceDark,
-    surface = Color(0xFF211D1B),
+    onBackground = TextPrimary,
+    surface = SurfaceRaised,
+    onSurface = TextPrimary,
+    onSurfaceVariant = TextSecondary,
+    outline = CardBorder,
 )
 
 @Composable
 fun LinkPostrTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = if (darkTheme) DarkScheme else LightScheme
@@ -51,4 +60,3 @@ fun LinkPostrTheme(
         content = content,
     )
 }
-

@@ -8,10 +8,11 @@ import androidx.compose.ui.unit.sp
 
 val LinkPostrTypography = Typography(
     displaySmall = TextStyle(
-        fontFamily = FontFamily.Serif,
+        fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Bold,
-        fontSize = 36.sp,
-        lineHeight = 40.sp,
+        fontSize = 34.sp,
+        lineHeight = 38.sp,
+        letterSpacing = (-0.6).sp,
     ),
     titleMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
@@ -38,4 +39,3 @@ val LinkPostrTypography = Typography(
         lineHeight = 20.sp,
     ),
 )
-
