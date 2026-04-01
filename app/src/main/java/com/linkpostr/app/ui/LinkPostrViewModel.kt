@@ -28,6 +28,10 @@ class LinkPostrViewModel(
         _uiState.update { it.copy(topic = value) }
     }
 
+    fun onPostDraftChange(value: String) {
+        _uiState.update { it.copy(postDraft = value) }
+    }
+
     fun onToneSelected(tone: ToneOption) {
         _uiState.update { it.copy(selectedTone = tone) }
     }
@@ -64,10 +68,10 @@ class LinkPostrViewModel(
                         it.copy(
                             isLoading = false,
                             loadingLabel = "",
-                            generatedPost = post,
+                            postDraft = post,
                             hashtags = emptyList(),
                             emojiSuggestions = emptyList(),
-                            message = "Fresh draft ready.",
+                            message = "Draft ready to post.",
                             isError = false,
                         )
                     }
@@ -79,9 +83,9 @@ class LinkPostrViewModel(
     }
 
     fun improvePost() {
-        val post = uiState.value.generatedPost.trim()
+        val post = uiState.value.postDraft.trim()
         if (post.isBlank()) {
-            showMessage("Generate a post first, then I can polish it.", isError = true)
+            showMessage("Add or generate a post first, then I can polish it.", isError = true)
             return
         }
 
@@ -101,9 +105,9 @@ class LinkPostrViewModel(
                         it.copy(
                             isLoading = false,
                             loadingLabel = "",
-                            generatedPost = rewritten,
+                            postDraft = rewritten,
                             emojiSuggestions = emptyList(),
-                            message = "Tone polished for LinkedIn.",
+                            message = "Draft polished for LinkedIn.",
                             isError = false,
                         )
                     }
@@ -115,9 +119,9 @@ class LinkPostrViewModel(
     }
 
     fun generateHashtags() {
-        val post = uiState.value.generatedPost.trim()
+        val post = uiState.value.postDraft.trim()
         if (post.isBlank()) {
-            showMessage("Generate a post first, then I can build hashtags.", isError = true)
+            showMessage("Add or generate a post first, then I can build hashtags.", isError = true)
             return
         }
 
@@ -132,7 +136,7 @@ class LinkPostrViewModel(
     }
 
     fun suggestEmojis() {
-        val source = uiState.value.generatedPost.ifBlank { uiState.value.topic }.trim()
+        val source = uiState.value.postDraft.ifBlank { uiState.value.topic }.trim()
         if (source.isBlank()) {
             showMessage("Add a topic or generate a post first, then I can suggest emojis.", isError = true)
             return
@@ -149,7 +153,7 @@ class LinkPostrViewModel(
     }
 
     fun addEmojiToPost(emoji: String) {
-        val post = uiState.value.generatedPost.trim()
+        val post = uiState.value.postDraft.trim()
         if (post.isBlank()) {
             showMessage("Generate a post first, then add emojis.", isError = true)
             return
@@ -157,7 +161,7 @@ class LinkPostrViewModel(
 
         _uiState.update {
             it.copy(
-                generatedPost = EmojiSuggestionEngine.append(post, emoji),
+                postDraft = EmojiSuggestionEngine.append(post, emoji),
                 message = "$emoji added to your draft.",
                 isError = false,
             )

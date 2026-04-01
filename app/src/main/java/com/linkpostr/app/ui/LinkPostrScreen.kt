@@ -22,7 +22,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.weight
+
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
@@ -91,8 +92,8 @@ fun LinkPostrScreen(
         viewModel.clearMessage()
     }
 
-    val finalShareText = remember(state.generatedPost, state.hashtags) {
-        buildShareText(post = state.generatedPost, hashtags = state.hashtags)
+    val finalShareText = remember(state.postDraft, state.hashtags) {
+        buildShareText(post = state.postDraft, hashtags = state.hashtags)
     }
 
     Scaffold(
@@ -144,11 +145,122 @@ fun LinkPostrScreen(
                 item {
                     GlassCard {
                         Text(
-                            text = "Post ideas",
+                            text = "Ready to post",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                         )
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Write or paste the post you want to publish. AI can still help, but posting is the main workflow.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        OutlinedTextField(
+                            value = state.postDraft,
+                            onValueChange = viewModel::onPostDraftChange,
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 7,
+                            label = { Text("LinkedIn post draft") },
+                            placeholder = { Text("Paste your final post here or write it directly, then tap Post to LinkedIn.") },
+                            shape = RoundedCornerShape(18.dp),
+                            textStyle = MaterialTheme.typography.bodyLarge,
+                        )
+                        Text(
+                            text = "${state.postDraft.length} characters",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Button(
+                                onClick = { shareText(context, finalShareText, linkedinOnly = true) },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = state.postDraft.isNotBlank() && !state.isLoading,
+                            ) {
+                                Icon(Icons.Rounded.Hub, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Post to LinkedIn")
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(finalShareText))
+                                    Toast.makeText(context, "Post copied to clipboard.", Toast.LENGTH_SHORT).show()
+                                },
+                                enabled = state.postDraft.isNotBlank(),
+                            ) {
+                                Icon(Icons.Rounded.ContentCopy, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Copy Post")
+                            }
+                            TextButton(
+                                onClick = { shareText(context, finalShareText, linkedinOnly = false) },
+                                enabled = state.postDraft.isNotBlank(),
+                            ) {
+                                Icon(Icons.Rounded.Share, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Share Anywhere")
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    GlassCard {
+                        Text(
+                            text = "AI Assist",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Use AI only when you need help drafting, polishing, hashtags, or emojis before you post.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = state.topic,
+                            onValueChange = viewModel::onTopicChange,
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3,
+                            label = { Text("Optional AI prompt") },
+                            placeholder = { Text("Example: My internship experience building an Android app") },
+                            shape = RoundedCornerShape(18.dp),
+                            textStyle = MaterialTheme.typography.bodyLarge,
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text(
+                            text = "Tone",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            ToneOption.entries.forEach { tone ->
+                                FilterChip(
+                                    selected = tone == state.selectedTone,
+                                    onClick = { viewModel.onToneSelected(tone) },
+                                    label = { Text(tone.label) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                        selectedLabelColor = MaterialTheme.colorScheme.onSurface,
+                                    ),
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Quick ideas",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -177,62 +289,43 @@ fun LinkPostrScreen(
                                 )
                             }
                         }
-                    }
-                }
-
-                item {
-                    GlassCard {
-                        Text(
-                            text = "Create your draft",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        OutlinedTextField(
-                            value = state.topic,
-                            onValueChange = viewModel::onTopicChange,
-                            modifier = Modifier.fillMaxWidth(),
-                            minLines = 3,
-                            label = { Text("What should your LinkedIn post be about?") },
-                            placeholder = { Text("Example: My internship experience building an Android app") },
-                            shape = RoundedCornerShape(18.dp),
-                            textStyle = MaterialTheme.typography.bodyLarge,
-                        )
-                        Spacer(modifier = Modifier.height(14.dp))
-                        Text(
-                            text = "Tone",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
-                            ToneOption.entries.forEach { tone ->
-                                FilterChip(
-                                    selected = tone == state.selectedTone,
-                                    onClick = { viewModel.onToneSelected(tone) },
-                                    label = { Text(tone.label) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                        selectedLabelColor = MaterialTheme.colorScheme.onSurface,
-                                    ),
-                                )
+                            Button(
+                                onClick = viewModel::generatePost,
+                                enabled = !state.isLoading,
+                            ) {
+                                Icon(Icons.Rounded.AutoAwesome, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Generate Draft")
                             }
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = viewModel::generatePost,
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = !state.isLoading,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.AutoAwesome,
-                                contentDescription = null,
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Generate Post")
+                            OutlinedButton(
+                                onClick = viewModel::improvePost,
+                                enabled = state.postDraft.isNotBlank() && !state.isLoading,
+                            ) {
+                                Icon(Icons.Rounded.Edit, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Polish Draft")
+                            }
+                            OutlinedButton(
+                                onClick = viewModel::generateHashtags,
+                                enabled = state.postDraft.isNotBlank(),
+                            ) {
+                                Icon(Icons.Rounded.Tag, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Hashtags")
+                            }
+                            OutlinedButton(
+                                onClick = viewModel::suggestEmojis,
+                                enabled = state.postDraft.isNotBlank() || state.topic.isNotBlank(),
+                            ) {
+                                Icon(Icons.Rounded.EmojiEmotions, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Emoji Touch")
+                            }
                         }
                     }
                 }
@@ -256,7 +349,7 @@ fun LinkPostrScreen(
                                         fontWeight = FontWeight.SemiBold,
                                     )
                                     Text(
-                                        text = "Hugging Face is handling the writing-heavy part.",
+                                        text = "Preparing your post helpers and LinkedIn-ready draft.",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
@@ -266,74 +359,12 @@ fun LinkPostrScreen(
                     }
                 }
 
-                if (state.generatedPost.isNotBlank()) {
+                if (state.postDraft.isNotBlank()) {
                     item {
                         LinkedInPreviewCard(
-                            post = state.generatedPost,
+                            post = state.postDraft,
                             hashtagCount = state.hashtags.size,
                         )
-                    }
-
-                    item {
-                        GlassCard {
-                            Text(
-                                text = "Actions",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                Button(
-                                    onClick = viewModel::improvePost,
-                                    enabled = !state.isLoading,
-                                ) {
-                                    Icon(Icons.Rounded.Edit, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Polish Tone")
-                                }
-                                OutlinedButton(
-                                    onClick = viewModel::generateHashtags,
-                                ) {
-                                    Icon(Icons.Rounded.Tag, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Generate Hashtags")
-                                }
-                                OutlinedButton(
-                                    onClick = viewModel::suggestEmojis,
-                                ) {
-                                    Icon(Icons.Rounded.EmojiEmotions, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Emoji Touch")
-                                }
-                                OutlinedButton(
-                                    onClick = {
-                                        clipboardManager.setText(AnnotatedString(finalShareText))
-                                        Toast.makeText(context, "Post copied to clipboard.", Toast.LENGTH_SHORT).show()
-                                    },
-                                ) {
-                                    Icon(Icons.Rounded.ContentCopy, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Copy")
-                                }
-                                OutlinedButton(
-                                    onClick = { shareText(context, finalShareText, linkedinOnly = true) },
-                                ) {
-                                    Icon(Icons.Rounded.Hub, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Share to LinkedIn")
-                                }
-                                TextButton(
-                                    onClick = { shareText(context, finalShareText, linkedinOnly = false) },
-                                ) {
-                                    Icon(Icons.Rounded.Share, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Share Anywhere")
-                                }
-                            }
-                        }
                     }
 
                     if (state.emojiSuggestions.isNotEmpty()) {
@@ -418,7 +449,7 @@ private fun HeaderBlock() {
             color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
-            text = "Switch between four looks, stay in light or dark mode, and keep writing in a cleaner, faster workspace.",
+            text = "Post to LinkedIn faster. Draft manually when you want, use AI only when it helps, and publish with fewer steps.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -441,7 +472,7 @@ private fun ThemeSelectorCard(
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "Pick from four styles. Your selection is saved automatically for the next launch.",
+            text = "Pick from four readable styles. Midnight Blue stays the default and your choice is saved automatically.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

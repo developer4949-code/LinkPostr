@@ -4,9 +4,9 @@ import com.linkpostr.app.domain.PostIdeaRepository
 
 data class LinkPostrUiState(
     val topic: String = "",
+    val postDraft: String = "",
     val selectedTone: ToneOption = ToneOption.Professional,
     val selectedAppTheme: AppThemeOption = AppThemeOption.MidnightBlue,
-    val generatedPost: String = "",
     val hashtags: List<String> = emptyList(),
     val emojiSuggestions: List<String> = emptyList(),
     val ideaSuggestions: List<String> = PostIdeaRepository.starterIdeas,
